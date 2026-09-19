@@ -11,6 +11,10 @@ A personal task organizer for classes, general tasks, and personal life.
 - Create and rename color-coded subjects within Classes, General, and Personal.
 - Daily, weekday, weekly, monthly, and yearly recurrence with custom intervals.
 - Completed history, search, priority filtering, and sorting.
+- Archive and restore folders and tasks using their action menus.
+- Permanently delete folders and all their tasks after reviewing a confirmation.
+- Archived folders hide their tasks from active views; restoring a folder preserves any independently archived tasks.
+- Deleted default folders are not recreated on refresh.
 - Responsive desktop and phone interface.
 - Persistent Cloudflare D1 storage with per-user ownership checks.
 
@@ -27,14 +31,15 @@ corepack enable
 pnpm install --frozen-lockfile
 pnpm build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_absurd_hellion.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_true_rockslide.sql
 pnpm dev
 ```
 
-Run the migration once for a new local database. Local development uses a development-only identity. Production rejects unauthenticated API calls and trusts identity headers injected by the Sites authentication gateway. Do not expose this Worker directly without a trusted gateway that strips client-supplied identity headers.
+Run each migration once for a new local database. Local development uses a development-only identity. Production rejects unauthenticated API calls and trusts identity headers injected by the Sites authentication gateway. Do not expose this Worker directly without a trusted gateway that strips client-supplied identity headers.
 
 ```sh
 pnpm exec tsc --noEmit
-node --experimental-strip-types --test tests/recurrence.test.mjs
+node --experimental-strip-types --test tests/recurrence.test.mjs tests/archive-api.test.mjs
 ```
 
 ## Architecture and hosting
