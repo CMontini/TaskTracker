@@ -7,3 +7,4 @@ export const tasks = sqliteTable('tasks', {
 },t=>[index('tasks_owner').on(t.owner),index('tasks_parent').on(t.parentId)]);
 
 export const workspaceInitialization=sqliteTable('workspace_initialization',{owner:text('owner').primaryKey(),createdAt:text('created_at').notNull()});
+export const workspaceImports=sqliteTable('workspace_imports',{id:text('id').primaryKey(),owner:text('owner').notNull(),provider:text('provider').notNull(),taskCount:integer('task_count').notNull(),completedAt:text('completed_at').notNull()});

@@ -1,4 +1,4 @@
-import { database, ownerOf } from '@/lib/server-db';
+import { database, ownerOf, importPending } from '@/lib/server-db';
 import { taskInput, subjectInput, nextDate, type Task } from '@/lib/task-model';
 import { z } from 'zod';
 export const dynamic='force-dynamic';
@@ -14,7 +14,7 @@ async function initialize(owner:string){
 async function state(owner:string){const db=database();const [s,t]=await db.batch([db.prepare('SELECT id,name,color,category,archived_at AS archivedAt,version FROM subjects WHERE owner=? ORDER BY category,name').bind(owner),db.prepare(taskSelect+' ORDER BY created_at DESC').bind(owner)]);return {subjects:s.results,tasks:t.results};}
 function fail(error:unknown){if(error instanceof z.ZodError)return Response.json({error:error.issues[0]?.message||'Invalid input.'},{status:400});const message=error instanceof Error?error.message:'';if(!message.startsWith('Please'))console.error('Taskline request failed',error);return Response.json({error:message==='Sign in to access your tasks.'?message:message.startsWith('Please')?message:'Could not save or load your tasks. Please try again.'},{status:message==='Sign in to access your tasks.'?401:message.startsWith('Please')?409:503});}
 function changed(changes:number|undefined){if(!changes)throw new Error('Please refresh: this item changed, was archived, or no longer exists.');}
-export async function GET(req:Request){try{const owner=ownerOf(req);await initialize(owner);return Response.json(await state(owner),{headers:{'Cache-Control':'no-store'}});}catch(e){return fail(e);}}
+export async function GET(req:Request){try{const owner=ownerOf(req);await initialize(owner);await importPending(owner);return Response.json(await state(owner),{headers:{'Cache-Control':'no-store'}});}catch(e){return fail(e);}}
 export async function POST(req:Request){try{
  const owner=ownerOf(req),db=database();if(req.headers.get('sec-fetch-site')==='cross-site')return Response.json({error:'Cross-site request rejected.'},{status:403});
  const b=z.object({action:z.enum(['saveSubject','saveTask','complete','reopen','deleteTask','archiveTask','restoreTask','archiveSubject','restoreSubject','deleteSubject']),id:z.string().optional(),version:z.number().int().positive().optional(),taskCount:z.number().int().nonnegative().optional(),task:z.unknown().optional(),subject:z.unknown().optional()}).parse(await req.json());

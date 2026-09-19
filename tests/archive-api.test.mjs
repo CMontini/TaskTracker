@@ -12,6 +12,7 @@ test('archive, restore, deletion, ownership, and recurrence through the workspac
  await writeFile(resolve(dir,'database.mjs'),`import {DatabaseSync} from 'node:sqlite';
  export const sqlite=new DatabaseSync(':memory:');sqlite.exec('PRAGMA foreign_keys=ON');
  export function ownerOf(req){return req.headers.get('test-owner')||'alice'};
+ export async function importPending(){};
  class Statement{constructor(sql,args=[]){this.sql=sql;this.args=args}bind(...args){return new Statement(this.sql,args)}async first(){return sqlite.prepare(this.sql).get(...this.args)||null}async run(){const s=sqlite.prepare(this.sql);if(/^SELECT/i.test(this.sql))return {results:s.all(...this.args),meta:{changes:0}};const r=s.run(...this.args);return {results:[],meta:{changes:Number(r.changes)}}}}
  const db={prepare:sql=>new Statement(sql),async batch(items){sqlite.exec('BEGIN');try{const r=[];for(const s of items)r.push(await s.run());sqlite.exec('COMMIT');return r}catch(e){sqlite.exec('ROLLBACK');throw e}}};export function database(){return db};`);
  const shim=await import(pathToFileURL(resolve(dir,'database.mjs')).href);

@@ -53,3 +53,7 @@ React + TypeScript, Vinext, Tailwind, Shadcn/Radix, and Cloudflare Workers + D1.
 - `.openai/hosting.json`: hosting and database binding
 
 Publishing requires a Cloudflare-compatible build, generated migrations, and the Sites deployment workflow. No API keys or database contents are committed.
+
+## Private Todoist imports
+
+An authorized snapshot can be staged as private runtime secrets: `TASKLINE_IMPORT_OWNER`, `TASKLINE_IMPORT_ID`, `TASKLINE_IMPORT_PART_COUNT`, and numbered `TASKLINE_IMPORT_PART_0` entries containing consecutive JSON fragments. The snapshot has a `tasks` array of `{sourceId, task, createdAt, completedAt}`; `task` uses the existing task input schema and destination folder ID. Store all entries as secrets through Sites, never in GitHub or client bundles. The matching owner's next workspace load validates every task and destination before atomically inserting tasks and a durable import receipt. Other owners cannot trigger or see the import. Refreshes preserve later edits and deletions. Completed tasks retain their completion timestamps and do not generate recurrences. Remove the staging secrets after the receipt has been verified, then redeploy. This is a one-time copy, not ongoing Todoist synchronization.
