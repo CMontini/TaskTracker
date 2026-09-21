@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "Taskline",
+  "short_name": "Taskline",
+  "description": "Your classes, projects, and everyday tasks in one place.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#132239",
+  "lang": "en",
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "/icons/taskline-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/taskline-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/taskline-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,8 +10,11 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
+    apple: "/icons/apple-touch-icon.png",
   },
+  appleWebApp: { capable: true, title: 'Taskline', statusBarStyle: 'default' },
 };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#132239' };
 
 export default function RootLayout({
   children,
@@ -20,6 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head><link rel="manifest" href="/manifest.webmanifest" crossOrigin="use-credentials"/></head>
       <body className="antialiased">{children}</body>
     </html>
   );
