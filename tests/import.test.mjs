@@ -39,10 +39,16 @@ test('private import preserves fields and completion, is atomic, and never resee
     const bad={...settings,TASKLINE_IMPORT_ID:'snapshot-2',TASKLINE_IMPORT_PART_COUNT:'1',TASKLINE_IMPORT_PART_0:JSON.stringify({tasks:[{...row,sourceId:'new'}, {...row,sourceId:'wrong',task:{...row.task,subjectId:'foreign-folder'}}]})};
     await assert.rejects(importWorkspace(db,'alice',bad),/destination folders/);
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM tasks').get().n,1);
-    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM workspace_imports').get().n,1);
+    // Separate sources with matching external IDs must not collide.
+    await importWorkspace(db,'alice',{...settings,TASKLINE_IMPORT_ID:'deadline-plan',TASKLINE_IMPORT_PART_COUNT:'1',TASKLINE_IMPORT_PART_0:JSON.stringify({provider:'deadline-plan',tasks:[row]})});
+    assert.equal(sqlite.prepare("SELECT COUNT(*) AS n FROM tasks WHERE id='alice:deadline-plan:task-1'").get().n,1);
+    assert.equal(sqlite.prepare("SELECT provider FROM workspace_imports WHERE id='alice:deadline-plan'").get().provider,'deadline-plan');
+    await importWorkspace(db,'alice',{...settings,TASKLINE_IMPORT_ID:'deadline-plan'});
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM tasks').get().n,2);
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM workspace_imports').get().n,2);
     // A database failure rolls back both the task insert and receipt.
     sqlite.exec("CREATE TRIGGER reject_receipt BEFORE INSERT ON workspace_imports WHEN NEW.id='alice:broken' BEGIN SELECT RAISE(ABORT,'failure'); END");
     await assert.rejects(importWorkspace(db,'alice',{...settings,TASKLINE_IMPORT_ID:'broken'}));
-    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM tasks').get().n,1);
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM tasks').get().n,2);
   } finally { sqlite.close(); await rm(dir,{recursive:true,force:true}); }
 });

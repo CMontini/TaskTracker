@@ -3,6 +3,7 @@ import { taskInput } from './task-model';
 
 // Import data lives in private runtime secrets, never in source or browser assets.
 const snapshotInput = z.object({
+  provider: z.string().regex(/^[a-z][a-z0-9-]{0,39}$/).default('todoist'),
   tasks: z.array(z.object({
     sourceId: z.string().min(1).max(100),
     task: z.unknown(),
@@ -21,7 +22,7 @@ export async function importWorkspace(db: D1Database, owner: string, settings: R
   const snapshot = snapshotInput.parse(JSON.parse(parts.join('')));
   const rows = snapshot.tasks.map(row => ({
     ...taskInput.parse(row.task),
-    id: `${owner}:todoist:${row.sourceId}`,
+    id: `${owner}:${snapshot.provider}:${row.sourceId}`,
     createdAt: row.createdAt,
     completedAt: row.completedAt,
     status: row.completedAt ? 'done' : 'todo',
@@ -37,6 +38,6 @@ export async function importWorkspace(db: D1Database, owner: string, settings: R
       SELECT json_extract(value,'$.id'),?,json_extract(value,'$.title'),json_extract(value,'$.notes'),json_extract(value,'$.subjectId'),json_extract(value,'$.type'),json_extract(value,'$.priority'),json_extract(value,'$.status'),json_extract(value,'$.dueDate'),json_extract(value,'$.dueTime'),json_extract(value,'$.repeat'),json_extract(value,'$.interval'),CAST(substr(json_extract(value,'$.dueDate'),9,2) AS INTEGER),json_extract(value,'$.completedAt'),json_extract(value,'$.createdAt')
       FROM json_each(?) WHERE NOT EXISTS (SELECT 1 FROM workspace_imports WHERE id=?)
       ON CONFLICT(id) DO NOTHING`).bind(owner, JSON.stringify(rows), receiptId),
-    db.prepare('INSERT OR IGNORE INTO workspace_imports(id,owner,provider,task_count,completed_at) VALUES(?,?,?,?,?)').bind(receiptId, owner, 'todoist', rows.length, new Date().toISOString()),
+    db.prepare('INSERT OR IGNORE INTO workspace_imports(id,owner,provider,task_count,completed_at) VALUES(?,?,?,?,?)').bind(receiptId, owner, snapshot.provider, rows.length, new Date().toISOString()),
   ]);
 }
